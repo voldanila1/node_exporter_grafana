@@ -1,0 +1,26 @@
+#!/bin/bash
+#locations=("msk" "ekt", "nsk", "nsk2", "rnd")
+list="msk ekt nsk nsk2 rnd" 
+for i in $list; do
+	inboundt=$(tail -1 /grafana_log/traffic/${i}.log | awk '{printf $2}')
+	outboundt=$(tail -1 /grafana_log/traffic/${i}.log  | awk '{printf $3}')
+	# b=$(echo $(printf "%.7f" $a)*8 | bc)
+	inbound=$(echo $(printf "%.7f" $inboundt)*8 | bc)
+	outbound=$(echo $(printf "%.7f" $outboundt)*8 | bc)
+	#echo $i
+	#echo $inbound
+	#echo "${i}_inbound" $inbound | curl --data-binary @- http://18.216.19.220:9091/metrics/job/${i}
+	
+cat <<EOF | curl --data-binary @- http://18.216.19.220:9091/metrics/job/inbound
+	# TYPE some_metric counter
+	inbound{location="${i}"} $inbound
+EOF
+
+	#echo "${i}_outbound" $outbound | curl --data-binary @- http://18.216.19.220:9091/metrics/job/${i}
+	
+cat <<EOF | curl --data-binary @- http://18.216.19.220:9091/metrics/job/outbound
+        outbound{location="${i}"} $outbound
+EOF
+	
+	sleep 3
+done
